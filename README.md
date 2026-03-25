@@ -6,7 +6,7 @@ This repository is a modified version of the Linux kernel with a custom LSM-tree
 # Setup
 - OS: Ubuntu 20.04 or 22.04
 - Kernel: 6.8
-- RocksDB: v7.
+- RocksDB: v8.11.4
 - Compiler: GCC / CMake
 
 
