@@ -10,6 +10,10 @@ mkdir build && cd build
 cmake .. -DCMAKE_BUILD_TYPE=Debug \
          -DWITH_GFLAGS=ON \
          -DWITH_SNAPPY=ON
+# 추후 Release 로 테스트
+# cmake .. -DCMAKE_BUILD_TYPE=Release \
+#          -DWITH_GFLAGS=ON \
+#          -DWITH_SNAPPY=ON
 make -j$(nproc) # Due to my resource; make-j4
 ```
 ## Test
@@ -40,6 +44,8 @@ file_writer_ -> Sync() 에서 실제 `fdatasync()` 호출.
 여기서, Sync() 스킵하고 inode 를 Pending Table 에 등록한 뒤, JBD2 활용하는 전략.
 
 ### Details of `SyncManifest()`
+Remove manifest sync
+
 ```c++
 IOStatus SyncManifest(const ImmutableDBOptions* db_options,
                       const WriteOptions& write_options,
@@ -102,6 +108,7 @@ int main() {
 ```bash
 g++ -std=c++17 -pthread /tmp/test_nob.cc -o /tmp/test_nob
 /tmp/test_nob
+sudo dmesg | grep "NobLSM" | tail -20 # For checking syscall
 ```
 
 ### Test Result
@@ -154,17 +161,83 @@ nob::NobSSTableManager::GetInstance().RegisterCompaction(
     {new_file_num});
 }
 ```
-# 4. Manifest 
 
-# 4. Build & Test
+# 4. (After registering and developing syscall) Replace the mocked with actual syscall
+
+```c++
+/* nob/nob_mock_syscall.h */
+#include <sys/syscall.h>
+#include <unistd.h>
+
+#define SYS_NOB_CHECK_COMMIT 462
+#define SYS_NOB_IS_COMMITTED 463
+
+inline void nob_check_commit(InodeNum ino) {
+    syscall(SYS_NOB_CHECK_COMMIT, ino);
+}
+
+inline bool nob_is_committed(InodeNum ino) {
+    return syscall(SYS_NOB_IS_COMMITTED, ino) == 1;
+}
+```
+
+Replace code of `WriterSyncClose()` again in compaction_job.cc with below
+```c++
+#include <sys/stat.h>
+...
+(중략)
+...
+
+if (io_s.ok() && s.ok()) {
+    // 실제 파일의 inode 번호 가져오기
+    std::string fname = GetTableFileName(meta->fd.GetNumber());
+    struct stat st;
+    if (::stat(fname.c_str(), &st) == 0) {
+        nob::NobSSTableManager::GetInstance().RegisterCompaction(
+            {},
+            {static_cast<uint64_t>(st.st_ino)});
+        nob::nob_check_commit(static_cast<uint64_t>(st.st_ino));
+    }
+}
+```
+
+
+
+# 5. (Optional) Copy RocksDB to VM (Linux dev env)
+지금 VM 셋업이 로컬에서 2222 포트 포워딩해둔 상태이므로 아래 명령어
+
+```bash
+rsync -av ~/rocksdb/ dev@localhost -p 2222:~/rocksdb/ \
+    --exclude=build
+```
+
+
+# 6. Build & Test
 ```bash
 cd ~/rocksdb/build
 make -j$(nproc) db_bench 2>&1 | head -50
 
-rm -rf /tmp/nob_test7
-strace -e trace=fdatasync,fsync ./db_bench \
+# Original RocksDB
+~/rocksdb/build_orig/db_bench \
     --benchmarks=fillrandom \
-    --num=100000 \
+    --num=10000000 \
     --value_size=1024 \
-    --db=/tmp/nob_test7 2>&1 | grep "fdatasync\|fsync"
+    --db=/tmp/orig_10m 2>&1 | grep "fillrandom"
+
+# NobLSM
+~/rocksdb/build/db_bench \
+    --benchmarks=fillrandom \
+    --num=10000000 \
+    --value_size=1024 \
+    --db=/tmp/nob_10m 2>&1 | grep "fillrandom"
+
+# Remove db file after experiments
+rm -rf /tmp/orig_10m /tmp/nob_10m
 ```
+
+Flow:
+
+  - pending_add(inode) (=RocksDB check_commit syscall)
+  - pending_contains(inode)=1 (=ext4_writepages 에서 확인)
+  - registering callback (=콜백 등록)
+  - commit callback rc=0 (=Ext4 async commit 완료)
