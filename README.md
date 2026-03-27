@@ -47,6 +47,52 @@ License:
 - Linux kernel retains its GPL-2.0 WITH Linux-syscall-note license.
 - RocksDB retains its Apache-2.0 license.
 
+# Programming Languages
+
+This project combines multiple components:
+
+- **C**: Linux kernel modifications (submodule `linux-6.8`)
+- **C++**: RocksDB integration (submodule `third_party/rocksdb`)
+
+## cloc
+### RocksDB
+        2067 text files.
+        2061 unique files.                                          
+        123 files ignored.
+
+    github.com/AlDanial/cloc v 1.82  T=1.54 s (1269.2 files/s, 590845.1 lines/s)
+    --------------------------------------------------------------------------------
+    Language                      files          blank        comment           code
+    --------------------------------------------------------------------------------
+    C++                             739          69386          68039         451710
+    C/C++ Header                    605          24986          52756         107115
+    Java                            330           8143          21693          43190
+    Python                           35           1263           1586           9223
+    JSON                              2              0              0           7757
+    Perl                              2            476           1709           5824
+    Markdown                         43           1580              0           5684
+    Bourne Shell                     43            803            935           4460
+    C                                 3            748            250           4108
+    make                              8            664            318           3351
+    CMake                            17            217            138           2624
+    Sass                             16            290             16           1781
+    YAML                             34             56            107           1581
+    HTML                             48             70              1            966
+    Bourne Again Shell                3            120            193            845
+    Assembly                          1            133            132            491
+    INI                               8             95              0            482
+    SVG                               6             22             27            339
+    PowerShell                        1             86            104            303
+    XML                               3              6             12            226
+    Maven                             1             15              4            119
+    Dockerfile                        4             18            109             95
+    Protocol Buffers                  1              5              8             15
+    DOS Batch                         1              0              0              1
+    --------------------------------------------------------------------------------
+    SUM:                           1954         109182         148137         652290
+    --------------------------------------------------------------------------------
+
+
 # Reference
 - RocksDB Wiki: https://github.com/facebook/rocksdb/wiki
 - Linux kernel reference: https://elixir.bootlin.com
