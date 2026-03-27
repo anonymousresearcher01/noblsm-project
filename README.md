@@ -24,10 +24,8 @@ To validate this idea, NobLSM must be equipped with the following user/kernel-le
 
 In this repo, user-space (RocksDB) and kernel-space (linux-6.8) has been modified and developed for validating the idea of NobLSM. Accoding to my experiment, NobLSM is superior to original RocksDB in terms of both throughput and latency perspectives.
 
-
-<img src="../assets/noblsm_throughput.png" width="400">
-<img src="../assets/noblsm_latency.png" width="400">
-
+<img src="./assets/noblsm_throughput.png" style="width:400px; height:300px">
+<img src="./assets/noblsm_latency.png" style="width:400px; height:300px">
 
 The throughput increased by up to 59.5\% and the latency reduced by up to 37.4\% for 10 millon KV *fillrandom* workload.
 This is because major compaction does not rely on synchrounous disk write anymore. 
