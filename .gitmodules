@@ -2,3 +2,6 @@
 	path = linux-6.8
 	url = https://github.com/anonymousresearcher01/linux.git
 	branch = NobLSM-v1.0
+[submodule "rocksdb"]
+	path = rocksdb
+	url = https://github.com/anonymousresearcher01/noblsm-dev-rocksdb.git
