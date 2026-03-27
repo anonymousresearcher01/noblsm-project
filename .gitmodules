@@ -1,4 +1,4 @@
 [submodule "linux-6.8"]
 	path = linux-6.8
 	url = https://github.com/anonymousresearcher01/linux.git
-	branch = nob
+	branch = NobLSM-v1.0
